@@ -1,14 +1,24 @@
 pipeline {
   agent any
-  triggers { githubPush() } // optional when using the webhook + Git trigger, but harmless
+  options { timestamps() }
+  triggers { githubPush() } // harmless + useful
   stages {
     stage('Checkout') {
-      steps { checkout scm }
-    }
-    stage('Build & Test') {
       steps {
-        sh 'echo "Build your app here"'
-        // e.g. sh './gradlew test' or 'npm ci && npm test'
+        checkout scm
+        sh 'ls -la' // prove we got your repo
+      }
+    }
+    stage('Run PowerShell (5s demo)') {
+      steps {
+        script {
+          // Run the Matrix script but cap it at 5s so the job doesn't hang
+          catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+            timeout(time: 5, unit: 'SECONDS') {
+              pwsh(label: 'Matrix', script: './matrix-screen.ps1')
+            }
+          }
+        }
       }
     }
   }
