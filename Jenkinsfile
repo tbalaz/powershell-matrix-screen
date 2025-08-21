@@ -17,7 +17,13 @@ pipeline {
         '''
       }
     }
-
+    stage('Run visible PowerShell') {
+      steps {
+        bat '''
+          start powershell -NoExit -Command "./matrix-screen-2.0.ps1"
+        '''
+      }
+    }
     stage('Run matrix-screen.ps1') {
       steps {
         // Use Windows PowerShell 5.1 by default
