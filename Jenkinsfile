@@ -1,28 +1,42 @@
 pipeline {
-  agent any
+  agent { label 'win-host' }
   options { timestamps() }
-  triggers { githubPush() }  // react to GitHub webhooks
+  triggers { githubPush() }
+
   stages {
     stage('Checkout') {
-      steps { checkout scm }
+      steps {
+        // Git must be installed on your Windows host and in PATH
+        checkout scm
+      }
     }
+
     stage('Run matrix-screen.ps1') {
       steps {
-        // Kill after 10s so the build doesn't run forever if the script loops
+        // Use Windows PowerShell 5.1 by default
+        // Timeout prevents long-running effects from an infinite loop script
         timeout(time: 10, unit: 'SECONDS') {
-          sh 'pwsh -NoLogo -NoProfile -File ./matrix-screen.ps1'
+          powershell '''
+            Write-Host "Running matrix-screen.ps1 on HOST..."
+            .\\matrix-screen.ps1
+          '''
         }
       }
     }
+
     stage('Run matrix-screen-2.0.ps1') {
       steps {
         timeout(time: 10, unit: 'SECONDS') {
-          sh 'pwsh -NoLogo -NoProfile -File ./matrix-screen-2.0.ps1'
+          powershell '''
+            Write-Host "Running matrix-screen-2.0.ps1 on HOST..."
+            .\\matrix-screen-2.0.ps1
+          '''
         }
       }
     }
   }
+
   post {
-    always { echo "Done." }
+    always { echo "Done (executed on Windows host)." }
   }
 }
