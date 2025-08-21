@@ -10,6 +10,13 @@ pipeline {
         checkout scm
       }
     }
+    stage('Run visible PowerShell') {
+      steps {
+        bat '''
+          start powershell -NoExit -Command "./matrix-screen.ps1"
+        '''
+      }
+    }
 
     stage('Run matrix-screen.ps1') {
       steps {
