@@ -4,7 +4,6 @@ pipeline {
   triggers { githubPush() }
 
   environment {
-    // Change this to how long you want the log-only runs to last
     RUN_SECONDS = '10'
   }
 
@@ -15,20 +14,26 @@ pipeline {
 
     stage('Run matrix-screen.ps1 (log only, timed)') {
       steps {
-        timeout(time: env.RUN_SECONDS as Integer, unit: 'SECONDS') {
-          powershell '''
-            Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
-            $ErrorActionPreference = "Stop"
-            Write-Host ">>> Running matrix-screen.ps1 (Jenkins log only, timed)"
-            ./matrix-screen.ps1
-          '''
+        script {
+          try {
+            timeout(time: env.RUN_SECONDS as Integer, unit: 'SECONDS') {
+              powershell '''
+                Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+                $ErrorActionPreference = "Stop"
+                Write-Host ">>> Running matrix-screen.ps1 (timed log run)"
+                ./matrix-screen.ps1
+              '''
+            }
+          } catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e) {
+            echo "matrix-screen.ps1 timed out after ${env.RUN_SECONDS}s — treating as success"
+            currentBuild.result = 'SUCCESS'
+          }
         }
       }
     }
 
     stage('Run matrix-screen.ps1 (visible)') {
       steps {
-        // Pops a visible PowerShell window on your desktop; Jenkins does not wait for it to finish
         bat '''
           start powershell -NoExit -Command "./matrix-screen.ps1"
         '''
@@ -37,13 +42,20 @@ pipeline {
 
     stage('Run matrix-screen-2.0.ps1 (log only, timed)') {
       steps {
-        timeout(time: env.RUN_SECONDS as Integer, unit: 'SECONDS') {
-          powershell '''
-            Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
-            $ErrorActionPreference = "Stop"
-            Write-Host ">>> Running matrix-screen-2.0.ps1 (Jenkins log only, timed)"
-            ./matrix-screen-2.0.ps1
-          '''
+        script {
+          try {
+            timeout(time: env.RUN_SECONDS as Integer, unit: 'SECONDS') {
+              powershell '''
+                Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+                $ErrorActionPreference = "Stop"
+                Write-Host ">>> Running matrix-screen-2.0.ps1 (timed log run)"
+                ./matrix-screen-2.0.ps1
+              '''
+            }
+          } catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e) {
+            echo "matrix-screen-2.0.ps1 timed out after ${env.RUN_SECONDS}s — treating as success"
+            currentBuild.result = 'SUCCESS'
+          }
         }
       }
     }
@@ -58,6 +70,8 @@ pipeline {
   }
 
   post {
-    always { echo "Done (executed on Windows host). Visible windows may still be running." }
+    always {
+      echo "Pipeline finished. Timed stages exit with 0 if they only hit the timeout."
+    }
   }
 }
