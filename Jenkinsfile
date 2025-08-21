@@ -17,7 +17,7 @@ pipeline {
         '''
       }
     }
-    stage('Run visible PowerShell') {
+    stage('Run visible PowerShell 2') {
       steps {
         bat '''
           start powershell -NoExit -Command "./matrix-screen-2.0.ps1"
